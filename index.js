@@ -1,17 +1,14 @@
 const express = require('express');
-const path = require('path');
 const cors = require('cors');
 const puppeteer = require('puppeteer');
 
 const app = express();
 
-app.use(express.static(path.join(__dirname, 'public')));
+// Enable CORS
 app.use(cors());
-app.use(express.json());
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// Parse JSON requests
+app.use(express.json());
 
 app.post('/map-screenshot', async (req, res) => {
   const locations = req.body.locations;
@@ -19,10 +16,7 @@ app.post('/map-screenshot', async (req, res) => {
   if (locations && Array.isArray(locations)) {
     try {
       const screenshotBuffer = await generateMapScreenshot(locations);
-      const filename = generateFilename(locations);
       res.setHeader('Content-Type', 'image/png');
-      res.setHeader('Content-Disposition', `attachment; filename=${filename}.png`);
-      res.setHeader('Content-Length', screenshotBuffer.length);
       res.status(200).send(screenshotBuffer);
     } catch (error) {
       console.error('Error generating map screenshot:', error);
@@ -77,9 +71,4 @@ function calculateZoom(locations) {
   const lngZoom = Math.floor(Math.log2(360 / (lngDistance * 256)));
 
   return Math.min(latZoom, lngZoom);
-}
-
-function generateFilename(locations) {
-  const cleanedLocations = locations.map(location => location.replace(/[^\w\s]/gi, '').replace(/\s+/g, '-').toLowerCase());
-  return cleanedLocations.join('-');
 }
